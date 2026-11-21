@@ -268,6 +268,20 @@ def import_queue(
     console.print(f"[green]Imported {result['added']} jobs[/green] ({result['skipped']} skipped/duplicates)")
 
 
+@app.command(name="send-kits")
+def send_kits(
+    min_score: int = typer.Option(8, "--min-score", help="Only send jobs with fit_score >= this (1-10)."),
+    limit: int = typer.Option(10, "--limit", help="Max kits per run."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print instead of sending."),
+) -> None:
+    """Send tailored resume + cover letter + Apply button to Telegram (free; you press apply)."""
+    from applypilot.database import init_db
+    from applypilot.telegram_kit import send_pending_kits
+
+    n = send_pending_kits(init_db(), min_score=min_score, limit=limit, dry_run=dry_run)
+    console.print(f"[green]{n} apply kit(s) {'previewed' if dry_run else 'sent'}[/green]")
+
+
 @app.command()
 def status() -> None:
     """Show pipeline statistics from the database."""
