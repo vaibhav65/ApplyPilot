@@ -268,6 +268,29 @@ def import_queue(
     console.print(f"[green]Imported {result['added']} jobs[/green] ({result['skipped']} skipped/duplicates)")
 
 
+@app.command()
+def feed(
+    source: str = typer.Argument(..., help="Path or URL of apply_queue.json from job-hunt-agent."),
+    min_score: int = typer.Option(8, "--min-score", help="Fit score (1-10) needed for tailoring and the Telegram kit."),
+    limit: int = typer.Option(10, "--limit", help="Max kits sent per run."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Import + preview kits without Telegram sends."),
+) -> None:
+    """One command: import queue -> enrich/score/tailor/cover/pdf -> Telegram apply kits (free)."""
+    _bootstrap()
+    from applypilot.config import check_tier
+    from applypilot.database import init_db
+    from applypilot.importer import import_jobs, load_feed
+    from applypilot.pipeline import run_pipeline
+    from applypilot.telegram_kit import send_pending_kits
+
+    check_tier(2, "AI scoring/tailoring")
+    res = import_jobs(init_db(), load_feed(source))
+    console.print(f"[green]Imported {res['added']} jobs[/green] ({res['skipped']} skipped/duplicates)")
+    run_pipeline(stages=["enrich", "score", "tailor", "cover", "pdf"], min_score=min_score, dry_run=dry_run)
+    n = send_pending_kits(init_db(), min_score=min_score, limit=limit, dry_run=dry_run)
+    console.print(f"[green]{n} apply kit(s) {'previewed' if dry_run else 'sent'}[/green]")
+
+
 @app.command(name="send-kits")
 def send_kits(
     min_score: int = typer.Option(8, "--min-score", help="Only send jobs with fit_score >= this (1-10)."),
