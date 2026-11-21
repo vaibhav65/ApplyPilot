@@ -144,6 +144,7 @@ def init_db(db_path: Path | str | None = None) -> sqlite3.Connection:
 # This is the single source of truth. Adding a column here is all that's needed
 # for it to appear in both new databases and migrated ones.
 _ALL_COLUMNS: dict[str, str] = {
+    "kit_sent_at": "TEXT",  # Telegram apply kit delivered
     # Discovery
     "url": "TEXT PRIMARY KEY",
     "title": "TEXT",
