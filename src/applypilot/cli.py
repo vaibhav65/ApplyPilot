@@ -256,6 +256,18 @@ def apply(
     )
 
 
+@app.command(name="import-queue")
+def import_queue(
+    source: str = typer.Argument(..., help="Path or URL of a JSON job feed (e.g. apply_queue.json)."),
+) -> None:
+    """Import jobs from an external feed so they flow through enrich/score/tailor/cover."""
+    from applypilot.database import init_db
+    from applypilot.importer import import_jobs, load_feed
+
+    result = import_jobs(init_db(), load_feed(source))
+    console.print(f"[green]Imported {result['added']} jobs[/green] ({result['skipped']} skipped/duplicates)")
+
+
 @app.command()
 def status() -> None:
     """Show pipeline statistics from the database."""
